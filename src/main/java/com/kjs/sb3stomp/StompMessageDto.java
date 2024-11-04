@@ -11,7 +11,13 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatMessageDto {
+public class StompMessageDto {
+    public enum StompMessageType {
+        ENTER,
+        MESSAGE,
+        OUT,
+    }
+    private StompMessageType msgType;
     private String roomId;
     private String writer;
     private String message;
