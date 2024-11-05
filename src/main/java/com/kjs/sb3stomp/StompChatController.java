@@ -12,6 +12,9 @@ public class StompChatController {
     @Autowired
     private SimpMessageSendingOperations msgTempate;
 
+    @Autowired
+    private StompRoomService stompRoomService;
+
     @MessageMapping("/stomp/message")
     public void message(StompMessageDto stompMessageDto) {
         log.info("/stomp/message => roomId:{}, msgType:{}, writer:{}, message:{}"
@@ -20,7 +23,20 @@ public class StompChatController {
                 , stompMessageDto.getWriter()
                 , stompMessageDto.getMessage()
         );
-        msgTempate.convertAndSend("/sub/stomp/room/" + stompMessageDto.getRoomId()
-                , stompMessageDto);
+        StompRoomDto stompRoom = stompRoomService.findByRoomId(stompMessageDto.getRoomId());
+        if (stompRoom == null) {
+            return;
+        }
+        if ( StompMessageDto.StompMessageType.ENTER == stompMessageDto.getMsgType() ) {
+            stompRoom.setCount(stompRoom.getCount() + 1);
+        } else if ( StompMessageDto.StompMessageType.OUT == stompMessageDto.getMsgType() ) {
+            stompRoom.setCount(stompRoom.getCount() - 1);
+        }
+        if( stompRoom.getCount() < 1 ) {
+            stompRoomService.deleteByRoomId(stompMessageDto.getRoomId());
+        } else {
+            msgTempate.convertAndSend("/sub/stomp/room/" + stompMessageDto.getRoomId()
+                    , stompMessageDto);
+        }
     }
 }
